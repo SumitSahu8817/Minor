@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Faculty Portal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+</head>
+<body style="background: #f4f7f6;">
+    <nav class="navbar">
+        <h2>Faculty Dashboard</h2>
+        <button id="logoutBtn" class="danger-btn">Logout</button>
+    </nav>
+
+    <main class="container">
+        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px;">
+            <h3>+ Add New Class</h3>
+            <form id="newClassForm" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                <input type="text" id="subjectInput" placeholder="Subject Name" required class="input-box">
+                <div style="display: flex; gap: 15px;">
+                    <input type="number" id="studentsInput" placeholder="Students Count" required class="input-box" style="flex: 1;">
+                    <input type="number" id="daysInput" placeholder="Semester Days" required class="input-box" style="flex: 1;">
+                </div>
+                <input type="file" id="syllabusFile" accept=".pdf, image/*" class="input-box">
+                <button type="submit" id="saveBtn" class="primary-btn">Scan File & Save Class</button>
+                <div id="uploadStatus" style="display:none; color: #28a745; font-weight: bold;"></div>
+            </form>
+        </div>
+
+        <h3>Your Classes</h3>
+        <div id="classesContainer" class="class-grid"></div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

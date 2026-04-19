@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        #loader { display: none; margin: 15px 0; font-weight: bold; color: #6a11cb; }
+    </style>
+</head>
+<body style="background: #f4f7f6;">
+    <nav class="navbar">
+        <button class="secondary-btn" onclick="window.location.href='dashboard.html'">← Back</button>
+        <h2>Faculty Planner</h2>
+    </nav>
+
+    <div class="container">
+        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
+            <h3>Syllabus Planner</h3>
+            <p style="margin-bottom: 15px;">Subject: <strong id="subjectLabel">Loading...</strong> | Days: <strong id="daysDisplay">--</strong></p>
+            
+            <textarea id="promptInput" class="input-box" placeholder="Write goals here... (e.g., Focus more on practicals)" style="height: 80px;"></textarea>
+            <button class="primary-btn" id="genBtn" onclick="generateSyllabus()">✨ Generate Smart Plan</button>
+            <div id="loader">⏳ AI is processing your syllabus... Please wait.</div>
+        </div>
+        
+        <table class="data-table" id="resultTable" style="display:none; background: white;">
+            <thead><tr><th>Done</th><th>Day</th><th>Topic</th><th>Action</th></tr></thead>
+            <tbody id="plannerBody"></tbody>
+        </table>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        const classId = new URLSearchParams(window.location.search).get('class');
+        let classData = null;
+
+        window.onload = async () => {
+            const res = await api.get(`/planner/${classId}`);
+            if (res.success) {
+                classData = res;
+                document.getElementById('subjectLabel').innerText = res.subject;
+                document.getElementById('daysDisplay').innerText = res.num_days;
+                if(res.plan && res.plan.length > 0) renderTable(res.plan);
+            }
+        };
+
+        function renderTable(items) {
+            const tbody = document.getElementById('plannerBody');
+            tbody.innerHTML = '';
+            document.getElementById('resultTable').style.display = 'table';
+            items.forEach(item => {
+                tbody.innerHTML += `
+                <tr>
+                    <td><input type="checkbox" ${item.is_done ? 'checked' : ''} onchange="toggleDay(${item.day_no})"></td>
+                    <td><strong>Day ${item.day_no}</strong></td>
+                    <td><input type="text" id="topic_${item.day_no}" value="${item.topic}" class="input-box" style="margin:0;"></td>
+                    <td><button onclick="updateTopic(${item.day_no})" class="success-btn">Save</button></td>
+                </tr>`;
+            });
+        }
+        
+        async function generateSyllabus() {
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('genBtn').disabled = true;
+            try {
+                const keyRes = await api.get('/get-ai-key');
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST", headers: { "Authorization": `Bearer ${keyRes.key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [{ role: "user", content: `Divide syllabus into ${classData.num_days} days. Text: ${classData.syllabus_text}. Goal: ${document.getElementById('promptInput').value}. Return ONLY JSON array of strings.` }]
+                    })
+                });
+                const data = await res.json();
+                const topicsArray = JSON.parse(data.choices[0].message.content.match(/\[[\s\S]*\]/)[0]);
+                const items = topicsArray.map((t, i) => ({ day_no: i+1, topic: t, is_done: false }));
+                await api.post(`/planner/${classId}/save`, { items });
+                location.reload();
+            } catch(e) { alert("Error generating plan."); }
+            finally { document.getElementById('loader').style.display = 'none'; document.getElementById('genBtn').disabled = false; }
+        }
+
+        async function toggleDay(dayNo) { await api.patch(`/planner/${classId}/toggle/${dayNo}`); location.reload(); }
+        async function updateTopic(dayNo) {
+            await api.patch(`/planner/${classId}/update/${dayNo}`, { topic: document.getElementById(`topic_${dayNo}`).value });
+            alert("Topic Updated!");
+        }
+    </script>
+</body>
+</html>

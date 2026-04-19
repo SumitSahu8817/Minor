@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Portal | Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh;">
+    
+    <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px;">
+        <h1 style="text-align: center; margin-bottom: 20px; color: #333;">Faculty Portal</h1>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button id="showLogin" class="primary-btn" style="flex: 1;">Login</button>
+            <button id="showRegister" class="secondary-btn" style="flex: 1;">Register</button>
+        </div>
+
+        <form id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email" required class="input-box">
+            <input type="password" id="loginPassword" placeholder="Password" required class="input-box">
+            <button type="submit" class="primary-btn" style="width: 100%;">Sign In</button>
+        </form>
+
+        <form id="registerForm" style="display: none;">
+            <input type="text" id="regName" placeholder="Full Name" required class="input-box">
+            <input type="email" id="regEmail" placeholder="Email" required class="input-box">
+            <input type="password" id="regPassword" placeholder="Password" required class="input-box">
+            <button type="submit" class="success-btn" style="width: 100%;">Create Account</button>
+        </form>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.getElementById('showLogin').onclick = () => {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+        };
+        document.getElementById('showRegister').onclick = () => {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        };
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await api.post("/auth/login", {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            });
+            if (res && res.token) { localStorage.setItem("token", res.token); window.location.href = "dashboard.html"; }
+            else alert(res.message || "Login failed!");
+        };
+
+        document.getElementById('registerForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await api.post("/auth/register", {
+                name: document.getElementById('regName').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value
+            });
+            if (res && res.token) { localStorage.setItem("token", res.token); window.location.href = "dashboard.html"; }
+            else alert(res.message || "Registration failed!");
+        };
+    </script>
+</body>
+</html>
